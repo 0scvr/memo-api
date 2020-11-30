@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -18,44 +19,47 @@ class UserController extends Controller
     }
 
     /**
-     * Creates a new player in the database.
+     * Creates a new player in the database and returns an API key.
      */
     public function register(Request $request)
     {
-        $username = $request->input('username');
-        $password = $request->input('password');
-
         try {
+            $username = $request->input('username');
+            $password = $request->input('password');
+            $apiKey = parent::generateApiKey();
+            
             DB::table('players')->insert(
-                ['username' => $username, 'password' => $password]
+                ['username' => $username, 'password' => $password, 'api_key' => $apiKey]
             );
 
-            return response(null, 201);
-        }
-        catch (Exception $e) {
-            return response(null, 400);
+            return response()->json(['api_key' => $apiKey], 201);
+        } catch (\Exception $ex) {
+            return response($ex->getMessage(), 400);
         }
     }
 
     /**
-     * 
+     * Checks a Player's credentials and returns his api key if valid.
      */
     public function login(Request $request)
     {
-        $username = $request->input('username');
-        $password = $request->input('password');
+        try {
+            $username = $request->input('username');
+            $password = $request->input('password');
 
-        $result = DB::table('players')->where([
-            ['username', '=', $username],
-            ['password', '=', $password],
-        ])->get();
+            $result = DB::table('players')->where([
+                ['username', '=', $username],
+                ['password', '=', $password],
+            ])->get();
 
-        // If wrong credentials send an error
-        if (sizeof($result) != 1) {
-            return response(null, 400);
+            if (sizeof($result) != 1) {
+                throw new Exception("Wrong credentials!", 1);
+            }
+    
+            // Returns the player's API key
+            return response()->json(['api_key' => $result[0]->api_key], 200);
+        } catch (\Exception $ex) {
+            return response($ex->getMessage(), 400);
         }
-
-        // TODO: send token?
-        return response($result, 200);
     }
 }

@@ -14,19 +14,13 @@
 */
 
 $router->get('/', function (){
-    return response(null, 200);
+    return view('home');
 });
 
 $router->post('/register', 'UserController@register');
 
 $router->post('/login', 'UserController@login');
 
-$router->get('/history/{player}', [
-    'middleware' => 'auth',
-    'uses' => 'GameController@getPlayerHistory'
-]);
+$router->post('/history','GameController@getPlayerHistory');
 
-$router->post('/save', [
-    'middleware' => 'auth',
-    'uses' => 'GameController@saveGame'
-]);
+$router->post('/save', 'GameController@saveGame');
